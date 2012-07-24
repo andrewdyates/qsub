@@ -1,4 +1,15 @@
 #!/usr/name/python
+"""Simple qsub dispatcher.
+
+EXAMPLE USE:
+
+from qsub import *
+script_txt= "echo 'hello, world'"
+qsub_txt = fill_template(jobname="hellworld", script=script_txt)
+print "Submitting..."
+print qsub_txt
+submit(qsub_txt)
+"""
 import sys
 import subprocess
 
