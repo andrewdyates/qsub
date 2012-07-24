@@ -31,7 +31,7 @@ source .bash_profile
 def timestr(hours=0, minutes=0, seconds=0):
   return "%d:%.2d:%.2d" % (hours, minutes, seconds)
 
-def fill_template(jobname='qsub.py_untitled_run', n_nodes=1, n_ppn=1, walltime='2:00:00', options="", script=None, *vargs, **kwds):
+def fill_template(jobname=None, n_nodes=1, n_ppn=1, walltime='2:00:00', options="", script=None, *vargs, **kwds):
   """Fill qsub submission script. Absorb any unrecognized keywords."""
   assert all((jobname, n_nodes, n_ppn, walltime, script))
   assert type(options) == str
