@@ -1,5 +1,7 @@
 #!/usr/name/python
 import sys
+import subprocess
+
 TEMPLATE = \
 """#PBS -N %(jobname)s
 #PBS -l nodes=%(n_nodes)d:ppn=%(n_ppn)d
@@ -26,6 +28,13 @@ def fill_template(jobname='qsub.py_untitled_run', n_nodes=1, n_ppn=1, walltime='
   n_nodes = int(n_nodes)
   # possibly handle walltime estimates
   return TEMPLATE % locals()
+
+def submit(script_txt):
+  p = subprocess.Popen("qsub", stdin=subprocess.PIPE)
+  p.communicate(input=script_txt)
+  p.stdin.close()
+  return True
+  
 
 if __name__ == "__main__":
   print fill_template(**dict([s.split('=') for s in sys.argv[1:]]))
