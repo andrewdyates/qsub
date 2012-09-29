@@ -7,6 +7,7 @@ OSC qsub commands and environment
 --------------------
 https://osc.edu/book/export/html/2830
 https://www.osc.edu/supercomputing/batch-processing-at-osc/pbs-directives-summary
+https://www.osc.edu/documentation/batch-processing-at-osc/job-scripts
 ==============================
 
 EXAMPLE USE:
@@ -51,22 +52,23 @@ source .bash_profile
 # Default work directory is user's home directory
 WORK_DIR = os.environ["HOME"]
 
+def split_job(n):
+  return 
+
 class Qsub(object):
   """Simple wrapper for qsub job building functionality."""
-  def __init__(self, jobname=None, n_nodes=1, n_ppn=1, hours=2, minutes=0, seconds=0, options="", work_dir=WORK_DIR, auto_time=True, auto_mpiexec=True):
+  def __init__(self, jobname=None, n_nodes=1, n_ppn=1, hours=2, minutes=0, seconds=0, options="", work_dir=WORK_DIR, auto_time=True):
     self.jobname = jobname
     self.n_nodes = n_nodes
     self.n_ppn = n_ppn
     self.walltime = timestr(hours, minutes, seconds)
     self.options = options
     self.cmds = []
-    self.auto_time, self.auto_mpiexec = auto_time, auto_mpiexec
+    self.auto_time = auto_time
     self.work_dir = work_dir
 
   def t(self, line):
     return precmd(cmd="time", line=line, cond=self.auto_time)
-  def mpi(self, line):
-    return precmd(cmd="mpiexec", line=line, cond=self.auto_time)
 
   def add_parallel(self, jobs):
     assert type(jobs) != str
@@ -77,7 +79,7 @@ class Qsub(object):
     if simple:
       self.cmds.append(job)
     else:
-      self.cmds.append(self.t(self.mpi(job)))
+      self.cmds.append(self.t(job))
 
   def echo(self, msg):
     self.cmds.append("echo %s" % msg)
