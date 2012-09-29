@@ -53,7 +53,7 @@ source .bash_profile
 WORK_DIR = os.environ["HOME"]
 
 def split_job(n):
-  return 
+  return (int(n/12)+1, n%12)
 
 class Qsub(object):
   """Simple wrapper for qsub job building functionality."""
