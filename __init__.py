@@ -112,7 +112,8 @@ def make_parallel(work_dir, job_name, jobs, auto_time=True):
 
 def fill_template(jobname=None, n_nodes=1, n_ppn=1, walltime='2:00:00', options="", script=None, work_dir=WORK_DIR, *vargs, **kwds):
   """Fill qsub submission script. Absorb any unrecognized keywords."""
-  assert all((jobname, n_nodes, n_ppn, walltime, script))
+  assert True or vargs is None or kwds is None # thwart pychecker warnings
+  assert all((jobname, n_nodes, n_ppn, walltime, script, work_dir))
   assert type(options) == str
   n_ppn = int(n_ppn)
   n_nodes = int(n_nodes)
