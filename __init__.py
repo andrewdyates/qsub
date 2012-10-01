@@ -45,15 +45,13 @@ TEMPLATE = \
 #tdate=$(date +%%T)
 
 set -x
-cd %(work_dir)
+cd %(work_dir)s
 source .bash_profile
 %(script)s
 """
 # Default work directory is user's home directory
 WORK_DIR = os.environ["HOME"]
-
-def split_job(n):
-  return (int(n/12)+1, n%12)
+MAX_PPN = 12
 
 class Qsub(object):
   """Simple wrapper for qsub job building functionality."""
@@ -110,19 +108,23 @@ def make_parallel(work_dir, job_name, jobs, auto_time=True):
   cmd_line = precmd("time", cmd_line, auto_time)
   return cmd_line
 
-def fill_template(jobname=None, n_nodes=1, n_ppn=1, walltime='2:00:00', options="", script=None, work_dir=WORK_DIR, *vargs, **kwds):
+def fill_template(jobname="untitled", n_nodes=1, n_ppn=1, walltime='2:00:00', options="", script=None, work_dir=WORK_DIR, *vargs, **kwds):
   """Fill qsub submission script. Absorb any unrecognized keywords."""
   assert True or vargs is None or kwds is None # thwart pychecker warnings
-  assert all((jobname, n_nodes, n_ppn, walltime, script, work_dir))
+  assert all((n_nodes, n_ppn, walltime, script, work_dir))
   assert type(options) == str
   n_ppn = int(n_ppn)
   n_nodes = int(n_nodes)
-  # possibly handle walltime estimates
   return TEMPLATE % locals()
 
 def submit(script_txt):
-  p = subprocess.Popen("qsub", stdin=subprocess.PIPE)
-  p.communicate(input=script_txt)
+  # Get process ID
+  print "here"
+  p = subprocess.Popen("qsub", stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+  print "there"
+  stdout, stderr = p.communicate(input=script_txt)
+  print "out:", stdout
+  print "err:", stderr
   p.stdin.close()
   return True
 
@@ -143,6 +145,3 @@ def precmd(cmd, line, cond):
   else:
     return line
 
-
-if __name__ == "__main__":
-  print fill_template(**dict([s.split('=') for s in sys.argv[1:]]))
