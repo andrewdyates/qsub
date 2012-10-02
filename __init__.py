@@ -28,7 +28,6 @@ Q.add_parallel(["python batch.py 1", "python batch.py 2"])
 Q.add("mycmd a=c")
 print Q.submit()
 """
-import sys
 import subprocess
 import random
 import datetime
@@ -81,7 +80,7 @@ def get_stdout_option(path):
 
 def get_depend_option(jobids, rel="after", exetype="any"):
   """Handles simplest case of dependency. See qsub manual for more complex options."""
-  return "#PBS -W depend=after%s:%s" % ":".join(jobids)
+  return "#PBS -W depend=%s%s:%s" % (rel, exetype, ":".join(jobids))
 
 class Qsub(object):
   """Simple wrapper for qsub job building functionality."""
@@ -99,14 +98,14 @@ class Qsub(object):
     self.cmds = []
     if email:
       self.options.append(get_mail_option())
-    if stdout:
+    if stdout_fpath:
       self.options.append(get_stdout_option(stdout_fpath))
-    if stderr:
+    if stderr_fpath:
       self.options.append(get_stderr_option(stderr_fpath))
     if after_jobids:
       if type(after_jobids) == str:
         after_jobids.split(':')
-      self.options.append(get_depend_option(jobids))
+      self.options.append(get_depend_option(after_jobids))
       
   def t(self, line):
     return precmd(cmd="time", line=line, cond=self.auto_time)
