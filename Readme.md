@@ -9,12 +9,11 @@ EXAMPLE USES:
     script_txt= "echo 'hello, world'"
     qsub_txt = fill_template(jobname="hellworld", script=script_txt)
     print "Submitting..."
-    print qsub_txt
-    submit(qsub_txt)
+    jobid = submit(qsub_txt)
     
 *Using job builder object*
-    Q = Qsub(n_nodes=1)
+    Q = Qsub(n_nodes=1, email=True)
     Q.add("mycmd a=b")
     Q.add_parallel(["python batch.py 1", "python batch.py 2"])
     Q.add("mycmd a=c")
-    print Q.submit()
+    job_id = Q.submit()

@@ -7,4 +7,4 @@ EXAMPLE USE:
 from __init__ import *
 
 if __name__ == "__main__":
-  print submit(fill_template(**dict([s.split('=') for s in sys.argv[1:]])))
+  print submit(fill_template(**dict([(s.partition('=')[0], s.partition('=')[2]) for s in sys.argv[1:]])))

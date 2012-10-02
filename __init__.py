@@ -1,8 +1,6 @@
 #!/usr/name/python
 """Simple qsub dispatcher.
 
-TODO: intelligently handle memory requests and request for multiple nodes and processors.
-
 OSC qsub commands and environment
 --------------------
 https://osc.edu/book/export/html/2830
@@ -48,6 +46,7 @@ TEMPLATE = \
 set -x
 cd %(work_dir)s
 source .bash_profile
+echo "PBS_JOBID: $PBS_JOBID"
 %(script)s
 """
 # Default work directory is user's home directory
@@ -68,10 +67,25 @@ def get_mail_option(begin=True, end=True, abort=True):
 def get_set_env_op_threads(n):
   return "export OMP_NUM_THREADS=%d" % (n)
 
+def get_delay_option(hour, minute=00, year=None, month=None, day=None, seconds=None):
+  if year: assert month
+  if month: assert day
+  s = filter(lambda x: x is not None, (year, month, day, hour, minute, seconds))
+  date_time = "".join(["%d"%x for x in s])
+  return "#PBS -a %s" % date_time
+
+def get_stderr_option(path):
+  return "#PBS -e %s" % (path)
+def get_stdout_option(path):
+  return "#PBS -o %s" % (path)
+
+def get_depend_option(jobids, rel="after", exetype="any"):
+  """Handles simplest case of dependency. See qsub manual for more complex options."""
+  return "#PBS -W depend=after%s:%s" % ":".join(jobids)
 
 class Qsub(object):
   """Simple wrapper for qsub job building functionality."""
-  def __init__(self, jobname=None, n_nodes=1, n_ppn=1, hours=2, minutes=0, seconds=0, options=None, work_dir=WORK_DIR, auto_time=True, email=False):
+  def __init__(self, jobname=None, n_nodes=1, n_ppn=1, hours=1, minutes=0, seconds=0, options=None, work_dir=WORK_DIR, auto_time=True, email=False, stdout_fpath=None, stderr_fpath=None, after_jobids=None):
     self.jobname = jobname
     self.n_nodes = n_nodes
     self.n_ppn = n_ppn
@@ -85,8 +99,15 @@ class Qsub(object):
     self.cmds = []
     if email:
       self.options.append(get_mail_option())
-
-
+    if stdout:
+      self.options.append(get_stdout_option(stdout_fpath))
+    if stderr:
+      self.options.append(get_stderr_option(stderr_fpath))
+    if after_jobids:
+      if type(after_jobids) == str:
+        after_jobids.split(':')
+      self.options.append(get_depend_option(jobids))
+      
   def t(self, line):
     return precmd(cmd="time", line=line, cond=self.auto_time)
 
@@ -134,7 +155,7 @@ def make_parallel(work_dir, job_name, jobs, auto_time=True):
   cmd_line = precmd("time", cmd_line, auto_time)
   return cmd_line
 
-def fill_template(jobname="untitled", n_nodes=1, n_ppn=1, walltime='2:00:00', options="", script=None, work_dir=WORK_DIR, *vargs, **kwds):
+def fill_template(jobname="untitled", n_nodes=1, n_ppn=1, walltime='0:40:00', options="", script=None, work_dir=WORK_DIR, *vargs, **kwds):
   """Fill qsub submission script. Absorb any unrecognized keywords."""
   assert True or vargs is None or kwds is None # thwart pychecker warnings
   assert all((n_nodes, n_ppn, walltime, script, work_dir))
@@ -144,11 +165,13 @@ def fill_template(jobname="untitled", n_nodes=1, n_ppn=1, walltime='2:00:00', op
   return TEMPLATE % locals()
 
 def submit(script_txt):
-  # Get process ID
+  """Submit qsub script, return job ID."""
   p = subprocess.Popen("qsub", stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
   stdout, stderr = p.communicate(input=script_txt)
   p.stdin.close()
-  return stdout.split('.')[0]
+  if stderr:
+    raise Exception, stderr
+  return stdout.strip('\n')
 
 
 def tstamp():

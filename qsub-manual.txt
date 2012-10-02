@@ -1,309 +1,1157 @@
-man(1)									man(1)
+qsub(1B)			      PBS			      qsub(1B)
 
 
 
 NAME
-       man - format and display the on-line manual pages
+       qsub - submit pbs job
 
 SYNOPSIS
-       man  [-acdfFhkKtwW]  [--path]  [-m system] [-p string] [-C config_file]
-       [-M pathlist] [-P pager] [-B browser] [-H htmlpager] [-S	 section_list]
-       [section] name ...
-
+       qsub  [-a  date_time] [-A account_string] [-b secs]
+       [-c checkpoint_options] [-C  directive_prefix]  [-d
+       path]  [-D path] [-e path] [-f] [-h] [-I] [-j join]
+       [-k keep] [-l resource_list] [-m mail_options]  [-M
+       user_list]  [-N	name]  [-o path] [-p priority] [-P
+       proxy_username[:group]]	[-q  destination]  [-r	c]
+       [-S path_list] [-t array_request] [-T prologue/epi-
+       logue  script_name]  [-u	  user_list]   [-v   vari-
+       able_list]     [-V]    [-w]    path    [-W    addi-
+       tional_attributes] [-x] [-X] [-z] [script]
 
 DESCRIPTION
-       man formats and displays the on-line manual pages.  If you specify sec-
-       tion, man only looks in that section of the manual.  name  is  normally
-       the  name of the manual page, which is typically the name of a command,
-       function, or file.  However, if name contains  a	 slash	(/)  then  man
-       interprets  it  as a file specification, so that you can do man ./foo.5
-       or even man /cd/foo/bar.1.gz.
+       To create a job is to submit an	executable  script
+       to  a  batch  server.  The batch server will be the
+       default server unless the -q option  is	specified.
+       See  discussion	of  PBS_DEFAULT	 under Environment
+       Variables below.	 Typically, the script is a  shell
+       script  which  will  be executed by a command shell
+       such as sh or csh.
 
-       See below for a description of where man	 looks	for  the  manual  page
-       files.
+       Options on the qsub command allow the specification
+       of attributes which affect the behavior of the job.
 
+       The qsub	 command  will	pass  certain  environment
+       variables  in  the  Variable_List  attribute of the
+       job.  These variables will be available to the job.
+       The value for the following variables will be taken
+       from the environment of	the  qsub  command:  HOME,
+       LANG,  LOGNAME,	PATH,  MAIL, SHELL, and TZ.  These
+       values will be assigned to a new name which is  the
+       current	name  prefixed	with  the string "PBS_O_".
+       For example, the job will have access to	 an  envi-
+       ronment	variable  named	 PBS_O_HOME which have the
+       value of the variable  HOME  in	the  qsub  command
+       environment.
 
-MANUAL SECTIONS
-       The standard sections of the manual include:
+       In addition to the above, the following environment
+       variables will be available to the batch job.
 
-       1      User Commands
+       PBS_O_HOST
+	      the name of the host  upon  which	 the  qsub
+	      command is running.
 
-       2      System Calls
+       PBS_SERVER
+	      the  hostname  of	 the pbs_server which qsub
+	      submits the job to.
 
-       3      C Library Functions
+       PBS_O_QUEUE
+	      the name of the original queue to which  the
+	      job was submitted.
 
-       4      Devices and Special Files
+       PBS_O_WORKDIR
+	      the  absolute  path  of  the current working
+	      directory of the qsub command.
 
-       5      File Formats and Conventions
+       PBS_ARRAYID
+	      each member of a job  array  is  assigned	 a
+	      unique identifier (see -t)
 
-       6      Games et. Al.
+       PBS_ENVIRONMENT
+	      set  to  PBS_BATCH  to indicate the job is a
+	      batch job, or to PBS_INTERACTIVE to indicate
+	      the  job	is  a  PBS interactive job, see -I
+	      option.
 
-       7      Miscellanea
+       PBS_JOBID
+	      the job identifier assigned to  the  job	by
+	      the batch system.
 
-       8      System Administration tools and Deamons
+       PBS_JOBNAME
+	      the job name supplied by the user.
 
-       Distributions  customize	 the  manual section to their specifics, which
-       often include additional sections.
+       PBS_NODEFILE
+	      the  name	 of  the  file contain the list of
+	      nodes assigned to the job (for parallel  and
+	      cluster systems).
 
+       PBS_QUEUE
+	      the  name of the queue from which the job is
+	      executed.
 
 OPTIONS
-       -C  config_file
-	      Specify	the   configuration   file  to	use;  the  default  is
-	      /etc/man.config.	(See man.config(5).)
+       -a date_time
+	       Declares the time after which  the  job	is
+	       eligible for execution.
 
-       -M  path
-	      Specify the list of directories to search for man pages.	 Sepa-
-	      rate  the directories with colons.  An empty list is the same as
-	      not specifying -M at all.	 See SEARCH PATH FOR MANUAL PAGES.
+	       The  date_time  argument	 is  in	 the form:
+	       [[[[CC]YY]MM]DD]hhmm[.SS]
 
-       -P  pager
-	      Specify which pager to use.  This option overrides the  MANPAGER
-	      environment  variable,  which  in turn overrides the PAGER vari-
-	      able.  By default, man uses /usr/bin/less -is.
+	       Where CC is the first  two  digits  of  the
+	       year  (the  century),  YY is the second two
+	       digits of the year, MM is  the  two  digits
+	       for  the month, DD is the day of the month,
+	       hh is the hour, mm is the minute,  and  the
+	       optional SS is the seconds.
 
-       -B     Specify which browser to use on HTML files.  This	 option	 over-
-	      rides  the  BROWSER  environment	variable. By default, man uses
-	      /usr/bin/less-is,
+	       If the month, MM, is not specified, it will
+	       default to the current month if the  speci-
+	       fied  day DD, is in the future.	Otherwise,
+	       the month will be set to next month.  Like-
+	       wise,  if the day, DD, is not specified, it
+	       will default to today if the time  hhmm	is
+	       in  the future.	Otherwise, the day will be
+	       set to tomorrow.	 For example, if you  sub-
+	       mit  a  job  at	11:15am	 with a time of -a
+	       1110, the job will be eligible  to  run	at
+	       11:10am tomorrow.
 
-       -H     Specify a command that renders HTML files as text.  This	option
-	      overrides	 the  HTMLPAGER	 environment variable. By default, man
-	      uses /bin/cat,
+       -A account_string
+	       Defines	the account string associated with
+	       the job.	 The account_string  is	 an  unde-
+	       fined  string  of  characters and is inter-
+	       preted by the  server  which  executes  the
+	       job.  See section 2.7.1 of the PBS ERS.
 
-       -S  section_list
-	      List is a colon separated list of	 manual	 sections  to  search.
-	      This option overrides the MANSECT environment variable.
+       -b seconds
+	       Defines	the maximum number of seconds qsub
+	       will   block    attempting    to	   contact
+	       pbs_server.   If pbs_server is down, or for
+	       a variety of communication  failures,  qsub
+	       will   continually   retry   connecting	to
+	       pbs_server for job submission.  This  value
+	       overrides   the	CLIENTRETRY  parameter	in
+	       torque.cfg.  This is a non-portable  TORQUE
+	       extension.   Portability-minded	users  can
+	       use the PBS_CLIENTRETRY environmental vari-
+	       able.   A  negative value is interpreted as
+	       infinity.  The default is 0.
 
-       -a     By default, man will exit after displaying the first manual page
-	      it finds.	 Using this option forces man to display all the  man-
-	      ual pages that match name, not just the first.
+       -c checkpoint_options
+	       Defines the options that will apply to  the
+	       job.  If the job executes upon a host which
+	       does not support checkpoint, these  options
+	       will be ignored.
 
-       -c     Reformat	the  source man page, even when an up-to-date cat page
-	      exists.  This can be meaningful if the cat  page	was  formatted
-	      for  a screen with a different number of columns, or if the pre-
-	      formatted page is corrupted.
+	       Valid checkpoint options are:
 
-       -d     Don’t actually display the man  pages,  but  do  print  gobs  of
-	      debugging information.
+	       none
+		  No checkpointing is to be performed.
 
-       -D     Both display and print debugging info.
+	       enabled
+		  Specify  that	 checkpointing	is allowed
+		  but must be explicitly invoked by either
+		  the qhold or qchkpt commands.
 
-       -f     Equivalent to whatis.
+	       shutdown
+		  Specify that checkpointing is to be done
+		  on a job at pbs_mom shutdown.
 
-       -F or --preformat
-	      Format only - do not display.
+	       periodic
+		  Specify that periodic	 checkpointing	is
+		  enabled. The default interval is 10 min-
+		  utes and can be changed by  the  $check-
+		  point_interval  option in the mom config
+		  file or by specifying an  interval  when
+		  the job is submitted
 
-       -h     Print a help message and exit.
+	       interval=minutes
+		  Checkpointing	 is  to be performed at an
+		  interval of minutes, which is the  inte-
+		  ger  number of minutes of wall time used
+		  by the job.  This value must be  greater
+		  than zero.
 
-       -k     Equivalent to apropos.
+	       depth=number
+		  Specify  a  number (depth) of checkpoint
+		  images to  be	 kept  in  the	checkpoint
+		  directory.
 
-       -K     Search  for  the	specified  string in *all* man pages. Warning:
-	      this is probably very slow!  It  helps  to  specify  a  section.
-	      (Just  to	 give  a  rough idea, on my machine this takes about a
-	      minute per 500 man pages.)
+	       dir=path
+		  Specify  a checkpoint directory (default
+		  is /var/spool/torque/checkpoint).
 
-       -m  system
-	      Specify an alternate set of man pages to	search	based  on  the
-	      system name given.
+       -C directive_prefix
+	       Defines the prefix that declares	 a  direc-
+	       tive  to the qsub command within the script
+	       file.  See the paragraph on  script  direc-
+	       tives  in the Extended Description section.
 
-       -p  string
-	      Specify  the  sequence  of  preprocessors to run before nroff or
-	      troff.  Not all installations will have a full set of preproces-
-	      sors.   Some of the preprocessors and the letters used to desig-
-	      nate them are: eqn (e), grap (g), pic (p), tbl (t), vgrind  (v),
-	      refer  (r).   This  option  overrides the MANROFFSEQ environment
-	      variable.
+	       If the -C option is presented with a direc-
+	       tive_prefix   argument  that  is	 the  null
+	       string, qsub will not scan the script  file
+	       for directives.
 
-       -t     Use /usr/bin/groff -Tps -mandoc to format the manual page, pass-
-	      ing  the	output	to  stdout.   The  default  output  format  of
-	      /usr/bin/groff -Tps -mandoc is Postscript, refer to  the	manual
-	      page  of	/usr/bin/groff -Tps -mandoc for ways to pick an alter-
-	      nate format.
+       -d path Defines	the  working  directory path to be
+	       used for the job.  If the -d option is  not
+	       specified, the default working directory is
+	       the home directory.  This option	 sets  the
+	       environment variable PBS_O_INITDIR.
 
-       Depending on the selected  format  and  the  availability  of  printing
-       devices,	 the  output  may  need	 to  be	 passed through some filter or
-       another before being printed.
+       -D path Defines	the  root directory to be used for
+	       the job.	 This option sets the  environment
+	       variable PBS_O_ROOTDIR.
 
-       -w or --path
-	      Don’t actually display the man pages, but	 do  print  the	 loca-
-	      tion(s) of the files that would be formatted or displayed. If no
-	      argument is given: display (on stdout) the list  of  directories
-	      that  is	searched by man for man pages. If manpath is a link to
-	      man, then "manpath" is equivalent to "man --path".
+       -e path Defines	the  path to be used for the stan-
+	       dard error stream of the	 batch	job.   The
+	       path argument is of the form:
+		   [hostname:][path_name]
+	       where  hostname	is  the	 name of a host to
+	       which  the  file	 will  be   returned   and
+	       path_name  is the path name on that host in
+	       the syntax recognized by POSIX.	The  argu-
+	       ment will be interpreted as follows:
 
-       -W     Like -w, but print file names one per line,  without  additional
-	      information.   This is useful in shell commands like man -aW man
-	      | xargs ls -l
+	       path_name
+		      Where  path_name	is not an absolute
+		      path name,  then	the  qsub  command
+		      will  expand  the path name relative
+		      to the current working directory	of
+		      the  command.  The command will sup-
+		      ply the name of the host upon  which
+		      it  is  executing	 for  the hostname
+		      component.
+
+	       hostname:path_name
+		      Where path_name is not  an  absolute
+		      path  name,  then	 the  qsub command
+		      will not expand the path name  rela-
+		      tive  to	the current working direc-
+		      tory of the command.  On delivery of
+		      the  standard  error,  the path name
+		      will be  expanded	 relative  to  the
+		      user’s  home  directory on the host-
+		      name system.
+
+	       path_name
+		      Where path_name specifies	 an  abso-
+		      lute  path  name, then the qsub will
+		      supply the name of the host on which
+		      it is executing for the hostname
+
+	       hostname:path_name
+		      Where  path_name	specifies an abso-
+		      lute path name,  the  path  will	be
+		      used as specified.  hostname.
+
+	       hostname:
+		      Where hostname specifies the name of
+		      the host that  the  file	should	be
+		      returned	to.  The  path will be the
+		      default file name.
+
+	       If the -e option is not	specified  or  the
+	       path_name  is not specified or is specified
+	       and is a directory, the default	file  name
+	       for the standard error stream will be used.
+	       The default name has the following form:
+		   job_name.esequence_number
+	       where job_name is the name of the job,  see
+	       -N  option,  and sequence_number is the job
+	       number assigned when the job is	submitted.
+
+       -f      Specifies  that	the job is fault tolerant.
+	       The fault_tolerant attribute will be set to
+	       true, which indicates that the job can sur-
+	       vive the loss  of  a  mom  other	 than  the
+	       "mother	superior"  mom	(the first node in
+	       the exec hosts )
+
+       -h      Specifies that a user hold  be  applied	to
+	       the job at submission time.
+
+       -I      Declares	 that the job is to be run "inter-
+	       actively".  The	job  will  be  queued  and
+	       scheduled  as  any  PBS batch job, but when
+	       executed, the standard input,  output,  and
+	       error  streams  of  the	job  are connected
+	       through qsub to	the  terminal  session	in
+	       which  qsub  is	running.  Interactive jobs
+	       are  forced  to	not  rerunable.	  See  the
+	       "Extended  Description" paragraph for addi-
+	       tion information of interactive jobs.
+
+       -j join Declares if the standard	 error	stream	of
+	       the  job	 will  be merged with the standard
+	       output stream of the job.
+
+	       An option argument value of oe directs that
+	       the two streams will be merged, intermixed,
+	       as standard  output.   An  option  argument
+	       value  of  eo  directs that the two streams
+	       will be	merged,	 intermixed,  as  standard
+	       error.
+
+	       If  the join argument is n or the option is
+	       not specified, the two streams will be  two
+	       separate files.
+
+       -k keep Defines	which (if either) of standard out-
+	       put or standard error will be  retained	on
+	       the  execution  host.  If set for a stream,
+	       this option overrides  the  path	 name  for
+	       that stream.  If not set, neither stream is
+	       retained on the execution host.
+
+	       The argument is either  the  single  letter
+	       "e" or "o", or the letters "e" and "o" com-
+	       bined in either order.  Or the argument	is
+	       the letter "n".
+
+	       e  The standard error stream is to retained
+		  on the execution host.  The  stream will
+		  be  placed  in the home directory of the
+		  user under whose user id  the	 job  exe-
+		  cuted.    The	 file  name  will  be  the
+		  default    file    name    given     by:
+		  job_name.esequence where job_name is the
+		  name specified for the job, and sequence
+		  is  the sequence number component of the
+		  job identifier.
+
+	       o  The  standard	 output	  stream   is	to
+		  retained  on	the  execution	host.  The
+		  stream will be placed in the home direc-
+		  tory of the user under whose user id the
+		  job executed.	 The file name will be the
+		  default     file    name    given    by:
+		  job_name.osequence where job_name is the
+		  name specified for the job, and sequence
+		  is the sequence number component of  the
+		  job identifier.
+
+	       eo Both	the  standard  output and standard
+		  error streams will be retained.
+
+	       oe Both the standard  output  and  standard
+		  error streams will be retained.
+
+	       n  Neither stream is retained.
+
+       -l resource_list
+	       Defines	the resources that are required by
+	       the job and  establishes	 a  limit  to  the
+	       amount  of  resource  that can be consumed.
+	       If  not	set  for  a  generally	 available
+	       resource,  such	as  CPU time, the limit is
+	       infinite.  The resource_list argument is of
+	       the form:
+		   resource_name[=[value]][,resource_name[=[value]],...]
+
+       -m mail_options
+	       Defines the set of conditions  under  which
+	       the  execution server will send a mail mes-
+	       sage about the job.  The mail_options argu-
+	       ment  is	 a string which consists of either
+	       the single character "n", or one or more of
+	       the characters "a", "b", and "e".
+
+	       If  the character "n" is specified, no mail
+	       will be sent.
+
+	       For the letters "a", "b", and "e":
+
+	       a  mail is sent when the job is aborted	by
+		  the batch system.
+
+	       b  mail	is sent when the job begins execu-
+		  tion.
+
+	       e  mail is sent when the job terminates.
+
+	       If the -m option	 is  not  specified,  mail
+	       will be sent if the job is aborted.
+
+       -M user_list
+	       Declares	 the list of users to whom mail is
+	       sent by the execution server when it  sends
+	       mail about the job.
+
+	       The user_list argument is of the form:
+		   user[@host][,user[@host],...]
+	       If  unset, the list defaults to the submit-
+	       ting user at the qsub host,  i.e.  the  job
+	       owner.
+
+       -N name Declares	 a  name  for  the  job.  The name
+	       specified may be up  to	and  including	15
+	       characters  in  length.	It must consist of
+	       printable, non white space characters  with
+	       the first character alphabetic.
+
+	       If  the -N option is not specified, the job
+	       name will be  the  base	name  of  the  job
+	       script  file specified on the command line.
+	       If no script file name  was  specified  and
+	       the  script  was	 read  from  the  standard
+	       input, then the job name	 will  be  set	to
+	       STDIN.
+
+       -o path Defines	the  path to be used for the stan-
+	       dard output stream of the batch	job.   The
+	       path argument is of the form:
+		   [hostname:][path_name]
+	       where  hostname	is  the	 name of a host to
+	       which  the  file	 will  be   returned   and
+	       path_name  is the path name on that host in
+	       the syntax recognized by POSIX.	The  argu-
+	       ment will be interpreted as follows:
+
+	       path_name
+		      Where  path_name	is not an absolute
+		      path name,  then	the  qsub  command
+		      will  expand  the path name relative
+		      to the current working directory	of
+		      the  command.  The command will sup-
+		      ply the name of the host upon  which
+		      it  is  executing	 for  the hostname
+		      component.
+
+	       hostname:path_name
+		      Where path_name is not  an  absolute
+		      path  name,  then	 the  qsub command
+		      will not expand the path name  rela-
+		      tive  to	the current working direc-
+		      tory of the command.  On delivery of
+		      the  standard  output, the path name
+		      will be  expanded	 relative  to  the
+		      user’s  home  directory on the host-
+		      name system.
+
+	       path_name
+		      Where path_name specifies	 an  abso-
+		      lute  path  name, then the qsub will
+		      supply the name of the host on which
+		      it is executing for the hostname
+
+	       hostname:path_name
+		      Where  path_name	specifies an abso-
+		      lute path name,  the  path  will	be
+		      used as specified.  hostname.
+
+	       hostname:
+		      Where hostname specifies the name of
+		      the host that  the  file	should	be
+		      returned	to.  The  path will be the
+		      default file name.
+
+	       If the -o option is not	specified  or  the
+	       path_name  is not specified or is specified
+	       and is a directory, the default	file  name
+	       for  the	 standard  output  stream  will be
+	       used.  The default name has  the	 following
+	       form:
+		   job_name.osequence_number
+	       where  job_name is the name of the job, see
+	       -N option, and sequence_number is  the  job
+	       number  assigned when the job is submitted.
+
+       -p priority
+	       Defines the priority of the job.	 The  pri-
+	       ority  argument	must  be a integer between
+	       -1024 and +1023 inclusive.  The default	is
+	       no priority which is equivalent to a prior-
+	       ity of zero.
+
+       -P proxy_user[:group]
+	       Proxy user for whom the job should be  sub-
+	       mitted.	 This option is only available for
+	       the super user.
+
+       -q destination
+	       Defines the destination of  the	job.   The
+	       destination  names  a queue, a server, or a
+	       queue at a server.
+
+	       The qsub command will submit the script	to
+	       the server defined by the destination argu-
+	       ment.  If  the  destination  is	a  routing
+	       queue,  the job may be routed by the server
+	       to a new destination.
+
+	       If the -q option is not specified, the qsub
+	       command	will  submit  the  script  to  the
+	       default server.	See PBS_DEFAULT under  the
+	       Environment  Variables  section on this man
+	       page  and  the  PBS  ERS	  section   2.7.4,
+	       "Default Server".
+
+	       If the -q option is specified, it is in one
+	       of the following three forms:
+		   queue
+		   @server
+		   queue@server
+
+	       If the destination argument names  a  queue
+	       and does not name a server, the job will be
+	       submitted to the named queue at the default
+	       server.
+
+	       If  the destination argument names a server
+	       and does not name a queue, the job will	be
+	       submitted to the default queue at the named
+	       server.
+
+	       If the destination argument  names  both	 a
+	       queue and a server, the job will be submit-
+	       ted to the named queue at the named server.
+
+       -r y|n  Declares whether the job is rerunable.  See
+	       the qrerun command.  The option argument is
+	       a single character, either y or n.
+
+	       If  the	argument is "y", the job is rerun-
+	       able.  If the argument is "n", the  job	is
+	       not  rerunable.	 The default value is ’y’,
+	       rerunable.
+
+       -S path_list
+	       Declares the shell that interprets the  job
+	       script.
+
+	       The  option  argument  path_list	 is in the
+	       form:
+		   path[@host][,path[@host],...]
+	       Only one path may be specified for any host
+	       named.	Only  one  path	 may  be specified
+	       without the corresponding host  name.   The
+	       path selected will be the one with the host
+	       name that matched the name of the execution
+	       host.   If  no matching host is found, then
+	       the path specified without a host  will	be
+	       selected, if present.
+
+	       If  the	-S  option  is	not specified, the
+	       option argument is the null string,  or	no
+	       entry  from  the path_list is selected, the
+	       execution will use the user’s  login  shell
+	       on the execution host.
+
+       -t array_request
+	       Specifies  the  task  ids  of  a job array.
+	       Single task arrays are allowed.
+
+	       The array_request argument is an integer id
+	       or  a range of integers. Multiple ids or id
+	       ranges can be combined in a comma  delimted
+	       list. Examples : -t 1-100 or -t 1,10,50-100
+
+	       An optional slot limit can be specified	to
+	       limit  the amount of jobs that can run con-
+	       currently in the	 job  array.  The  default
+	       value  is unlimited. The slot limit must be
+	       the   last   thing   specified	 in    the
+	       array_request  and  is  delimited  from the
+	       array by a percent sign (%).
+
+	       qsub script.sh -t 0-299%5
+
+	       This sets the slot limit to 5. Only 5  jobs
+	       from this array can run at the same time.
+
+	       Note:  You  can	use  qalter to modify slot
+	       limits on an array.  The	 server	 parameter
+	       max_slot_limit  can be used to set a global
+	       slot limit policy.
+
+       -T script_name
+	       Allows for per job  prologue  and  epilogue
+	       scripts.	 The full script name will be pro-
+	       logue.[name] or	epilogue.[name].  For  the
+	       job  submission,	 only  request the name of
+	       the prologue or epilogue script.
+
+	       Example: qsub -T prescript
+	       Specifies to use the  script  prologue.pre-
+	       script
+
+       -u user_list
+	       Defines	the  user name under which the job
+	       is to run on the execution system.
+
+	       The user_list argument is of the form:
+		   user[@host][,user[@host],...]
+	       Only one user name may be given per  speci-
+	       fied host.  Only one of the user specifica-
+	       tions may be supplied  without  the  corre-
+	       sponding	 host  specification.	That  user
+	       name will used for execution  on	 any  host
+	       not  named in the argument list.	 If unset,
+	       the user list defaults to the user  who	is
+	       running qsub.
+
+       -v variable_list
+	       Expands	the  list of environment variables
+	       that are exported to the job.
+
+	       In addition to the variables  described	in
+	       the   "Description"  section  above,  vari-
+	       able_list names environment variables  from
+	       the qsub command environment which are made
+	       available to the job when it executes.  The
+	       variable_list  is a comma separated list of
+	       strings	of  the	 form  variable	 or  vari-
+	       able=value.  These variables and their val-
+	       ues are passed to the job.
+
+       -V      Declares that all environment variables	in
+	       the  qsub  command’s  environment are to be
+	       exported to the batch job.
+
+       -w path Defines the working directory  path  to	be
+	       used  for the job.  If the -w option is not
+	       specified, the default working directory is
+	       the  current  directory.	  This option sets
+	       the environment variable PBS_O_WORKDIR.
+
+       -W additional_attributes
+	       The -W option allows for the  specification
+	       of  additional job attributes.  The general
+	       syntax of the -W is in the form:
+		   -W
+	       attr_name=attr_value[,attr_name=attr_value...]
+	       Note if white space occurs anywhere  within
+	       the  option  argument  string  or the equal
+	       sign, "=", occurs within an attribute_value
+	       string,	then  the  string must be enclosed
+	       with either single or double quote marks.
+
+	       PBS  currently	supports   the	 following
+	       attributes within the -W option.
+
+	       depend=dependency_list
+	       Defines	the  dependency	 between  this and
+	       other jobs.  The dependency_list is in  the
+	       form:
+	       type[:argument[:argument...][,type:argu-
+	       ment...].
+	       The argument is either a numeric count or a
+	       PBS job id according to type .  If argument
+	       is a count, it must be greater than 0.	If
+	       it  is  a job id and not fully specified in
+	       the form seq_number.server.name, it will be
+	       expanded	 according  to	the default server
+	       rules which apply to job IDs on	most  com-
+	       mands.	If argument is null (the preceding
+	       colon need not be  specified),  the  depen-
+	       dency  of the corresponding type is cleared
+	       (unset).
+
+		   synccount:count
+		       This job is the first in a  set	of
+		       jobs  to	 be  executed  at the same
+		       time.  Count is the number of addi-
+		       tional jobs in the set.
+
+		   syncwith:jobid
+		       This job is an additional member of
+		       a set of jobs to be executed at the
+		       same  time.   In the above and fol-
+		       lowing dependency types,	 jobid	is
+		       the job identifier of the first job
+		       in the set.
+
+		   after:jobid[:jobid...]
+		       This job may be scheduled for  exe-
+		       cution  at  any	point  after  jobs
+		       jobid have started execution.
+
+		   afterok:jobid[:jobid...]
+		       This job may be scheduled for  exe-
+		       cution  only  after jobs jobid have
+		       terminated with no errors.  See the
+		       csh    warning	 under	 "Extended
+		       Description".
+
+		   afternotok:jobid[:jobid...]
+		       This job may be scheduled for  exe-
+		       cution  only  after jobs jobid have
+		       terminated with	errors.	  See  the
+		       csh    warning	 under	 "Extended
+		       Description".
+
+		   afterany:jobid[:jobid...]
+		       This job may be scheduled for  exe-
+		       cution after jobs jobid have termi-
+		       nated, with or without errors.
+
+		   on:count
+		       This job may be scheduled for  exe-
+		       cution  after count dependencies on
+		       other  jobs  have  been	satisfied.
+		       This  form  is  used in conjunction
+		       with one of the before  forms,  see
+		       below.
+
+		   before:jobid[:jobid...]
+		       When  this job has begun execution,
+		       then jobs jobid... may begin.
+
+		   beforeok:jobid[:jobid...]
+		       If this	job  terminates	 execution
+		       without	errors, then jobs jobid...
+		       may begin.   See	 the  csh  warning
+		       under "Extended Description".
+
+		   beforenotok:jobid[:jobid...]
+		       If  this	 job  terminates execution
+		       with errors, then jobs jobid... may
+		       begin.	See  the csh warning under
+		       "Extended Description".
+
+		   beforeany:jobid[:jobid...]
+		       When this job terminates execution,
+		       jobs jobid... may begin.
+
+		       If  any	of  the	 before	 forms are
+		       used, the jobs referenced by  jobid
+		       must  have  been	 submitted  with a
+		       dependency type of on.
+
+		   Array Dependencies
+		       It is now possible to  have  a  job
+		       depend on an array. These dependen-
+		       cies are in the form  depend=array-
+		       dep:arrayid[num].  If  [num] is not
+		       present,	 then	the   dependencies
+		       applies	to  the	 entire	 array. If
+		       [num] is present,  then	num  means
+		       the  number  of jobs that must meet
+		       the condition for the dependency to
+		       be satisfied.
+
+		   afterstartarray:arrayid[count]
+		       This  job may be scheduled for exe-
+		       cution only after jobs  in  arrayid
+		       have started execution.
+
+		   afterokarray:arrayid[count]
+		       This  job may be scheduled for exe-
+		       cution only after jobs  in  arrayid
+		       have terminated with no errors.
+
+		   afternotok:arrayid[count]
+		       This  job may be scheduled for exe-
+		       cution only after jobs  in  arrayid
+		       have terminated with errors.
+
+		   afteranyarray:arrayid[count]
+		       This  job may be scheduled for exe-
+		       cution after jobs in array id  have
+		       terminated, with or without errors.
+
+		   beforestartarray:arrayid[count]
+		       This job may be scheduled for  exe-
+		       cution  only before jobs in arrayid
+		       have started execution.
+
+		   beforeokarray:arrayid[count]
+		       This job may be scheduled for  exe-
+		       cution  only before jobs in arrayid
+		       have terminated with no errors.
+
+		   beforenotok:arrayid[count]
+		       This job may be scheduled for  exe-
+		       cution  only before jobs in arrayid
+		       have terminated with errors.
+
+		   beforeanyarray:arrayid[count]
+		       This job may be scheduled for  exe-
+		       cution before jobs in array id have
+		       terminated, with or without errors.
+
+		       If  any	of  the	 before	 forms are
+		       used, the jobs referenced by  jobid
+		       must have the same owner as the job
+		       being  submitted.   Otherwise,  the
+		       dependency is ignored.
+
+		   Error   processing  of  the	existence,
+		   state, or condition of the job on which
+		   the	newly  submitted job is a deferred
+		   service, i.e. the  check  is	 performed
+		   after  the  job is queued.  If an error
+		   is  detected,  the  new  job	 will	be
+		   deleted  by	the  server.  Mail will be
+		   sent to the job submitter  stating  the
+		   error.
+
+		   Dependency examples:
+		   qsub -W depend=afterok:123.big.iron.com
+		   /tmp/script
+		   qsub					-W
+		   depend=before:234.hunk1.com:235.hunk1.com
+		   /tmp/script
+		   qsub	       -W	 depend=afterokar-
+		   ray:21.tom.com[] /tmp/script
+		   qsub	     -W	     depend=beforenotokar-
+		   ray:22.tom.com[][5] /tmp/script
+
+	       group_list=g_list
+	       Defines the group name under which the  job
+	       is  to  run  on	the execution system.  The
+	       g_list argument is of the form:
+	       group[@host][,group[@host],...]
+	       Only one group name may be given per speci-
+	       fied  host.  Only one of the group specifi-
+	       cations may be supplied without the  corre-
+	       sponding	 host  specification.	That group
+	       name will used for execution  on	 any  host
+	       not  named  in  the  argument list.  If not
+	       set, the group_list defaults to the primary
+	       group  of the user under which the job will
+	       be run.
+
+	       interactive=true
+	       If the interactive attribute is	specified,
+	       the  job	 is  an	 interactive  job.  The -I
+	       option is a alternative method of  specify-
+	       ing this attribute.
+
+	       stagein=file_list
+	       stageout=file_list
+	       Specifies  which	 files are staged (copied)
+	       in before job start or staged out after the
+	       job  completes execution.  On completion of
+	       the job, all staged-in and staged-out files
+	       are removed from the execution system.  The
+	       file_list is in the form
+	       local_file@hostname:remote_file[,...]
+	       regardless of the direction  of	the  copy.
+	       The name local_file is the name of the file
+	       on the system where the job  executed.	It
+	       may  be an absolute path or relative to the
+	       home  directory	of  the	 user.	 The  name
+	       remote_file  is the destination name on the
+	       host specified by hostname.  The	 name  may
+	       be  absolute or relative to the user’s home
+	       directory on the destination host.  The use
+	       of wildcards in the file name is not recom-
+	       mended.	The file names	map  to	 a  remote
+	       copy  program  (rcp)  call on the execution
+	       system in the follow manner:
+	       For  stagein:	rcp   hostname:remote_file
+	       local_file
+	       For   stageout:	  rcp	local_file   host-
+	       name:remote_file
+	       Data staging examples:
+	       -W
+	       stagein=/tmp/input.txt@headnode:/home/user/input.txt
+	       -W			stageout=/tmp/out-
+	       put.txt@headnode:/home/user/output.txt
+	       If  TORQUE  has	been compiled with wordexp
+	       support, then variables can be used in  the
+	       specified     paths.	 Currently    only
+	       $PBS_JOBID, $HOME,  and	$TMPDIR	 are  sup-
+	       ported for stagein.
+
+	       umask=XXX
+	       Sets umask used to create stdout and stderr
+	       spool files  in	pbs_mom	 spool	directory.
+	       Values starting with 0 are treated as octal
+	       values, otherwise the value is treated as a
+	       decimal umask value.
+
+       -x      When  running  an  interactive  job, the -x
+	       flag makes it so that the script	 won’t	be
+	       parsed for PBS directives, but instead will
+	       be a command  that  is  launched	 once  the
+	       interactive  job	 has started. The job will
+	       terminate at the completion  of	this  com-
+	       mand.
+
+       -X      Enables	X11 forwarding.	 The DISPLAY envi-
+	       ronment variable must be set.
+
+       -z      Directs that the qsub  command  is  not	to
+	       write  the  job	identifier assigned to the
+	       job to the command’s standard output.
 
 
-CAT PAGES
-       Man will try to save the formatted man pages, in order to save  format-
-       ting time the next time these pages are needed.	Traditionally, format-
-       ted versions of pages in DIR/manX are saved in DIR/catX, but other map-
-       pings  from man dir to cat dir can be specified in /etc/man.config.  No
-       cat pages are saved when the required cat directory does not exist.  No
-       cat pages are saved when they are formatted for a line length different
-       from 80.	 No cat pages are saved	 when  man.config  contains  the  line
-       NOCACHE.
+OPERANDS
+       The qsub command accepts a script operand  that	is
+       the  path to the script of the job.  If the path is
+       relative, it will be expanded relative to the work-
+       ing directory of the qsub command.
 
-       It is possible to make man suid to a user man. Then, if a cat directory
-       has owner man and mode 0755 (only writable by man), and the  cat	 files
-       have  owner  man	 and  mode  0644 or 0444 (only writable by man, or not
-       writable at all), no ordinary user can change  the  cat	pages  or  put
-       other  files  in the cat directory. If man is not made suid, then a cat
-       directory should have mode 0777 if all users should be  able  to	 leave
-       cat pages there.
+       If  the	script	operand	 is  not  provided  or the
+       operand is the single character "-", the qsub  com-
+       mand  reads  the	 script from standard input.  When
+       the script is being read from Standard Input,  qsub
+       will  copy the file to a temporary file.	 This tem-
+       porary file is passed to the library interface rou-
+       tine  pbs_submit.  The temporary file is removed by
+       qsub after pbs_submit returns or upon  the  receipt
+       of a signal which would cause qsub to terminate.
 
-       The  option  -c	forces	reformatting a page, even if a recent cat page
-       exists.
+STANDARD INPUT
+       The  qsub command reads the script for the job from
+       standard input if the script operand is missing	or
+       is the single character "-".
+
+INPUT FILES
+       The  script file is read by the qsub command.  Qsub
+       acts upon any directives found in the script.
+
+       When the job is created, a copy of the script  file
+       is made and that copy cannot be modified.
+
+STANDARD OUTPUT
+       Unless  the  -z	option	is set, the job identifier
+       assigned to the job will	 be  written  to  standard
+       output if the job is successfully created.
+
+STANDARD ERROR
+       The qsub command will write a diagnostic message to
+       standard error for each error occurrence.
+
+ENVIRONMENT VARIABLES
+       The values of some or all of the variables  in  the
+       qsub  command’s	environment  are exported with the
+       job, see the -v and -V options.
+
+       The environment variable	 PBS_DEFAULT  defines  the
+       name  of the default server.   Typically, it corre-
+       sponds to the system name of the host on which  the
+       server  is running.  If PBS_DEFAULT is not set, the
+       default is defined by an administrator  established
+       file.
+
+       The environment variable PBS_DPREFIX determines the
+       prefix string which identifies  directives  in  the
+       script.
+
+       The  environment	 variable  PBS_CLIENTRETRY defines
+       the maximum number of seconds qsub will block.  See
+       the  -b	option above.  Despite the name, currently
+       qsub is the only client that supports this  option.
+
+TORQUE.CFG
+       The  torque.cfg	file,  located	in PBS_SERVER_HOME
+       (/var/spool/torque by default) controls the  behav-
+       ior  of the qsub command. This file contains a list
+       of parameters and values separated by whitespace
+
+       QSUBSLEEP takes an integer operand which	 specifies
+       time  to	 sleep when running qsub command.  Used to
+       prevent users from overwhelming the scheduler.
+
+       SUBMITFILTER specifies the path to the submit  fil-
+       ter used to pre-process job submission. The default
+       path is $(libexecdir)/qsub_filter, which falls back
+       to  /usr/local/sbin/torque_submitfilter	for  back-
+       wards  compatibility.  This  torque.cfg	 parameter
+       overrides this default.
+
+       SERVERHOST  specifies  the value for the PBS_SERVER
+       environment variable
+
+       QSUBHOST	 specifies  the	 hostname  for	the   jobs
+       QSUB_O_HOST variable
+
+       QSUBSENDUID  specifies  a  uid  to use for the jobs
+       PBS_O_UID variable
+
+       XAUTHPATH specifies the path to xauth
+
+       CLIENTRETRY specifies the integer  seconds  between
+       retry attempts to communicate with pbs_server
+
+       VALIDATEGROUP  set  this parameter to force qsub to
+       verify the submitter’s group id
+
+       DEFAULTCKPT specifies the  default  value  for  the
+       jobs checkpoint attribute.  The user overrides this
+       with the -c qsub option.
+
+       VALIDATEPATH set this parameter to  force  qsub	to
+       validate	 local	existence of a "-d" working direc-
+       tory
+
+       RERUNNABLEBYDEFAULT this parameter specifies  if	 a
+       job  is rerunnable by default. The default is true,
+       setting	this  to  false	 causes	  the	rerunnable
+       attribute value to be false unless the users speci-
+       fies otherwise with the -r option
+
+       FAULT_TOLERANT_BY_DEFAULT this parameter	 specifies
+       if a job is fault tolerant by default.  The default
+       value  for  the	fault_tolerant	job  attribute	is
+       false,  setting	this  parameter to true causes the
+       default value of the attribute to be true. The user
+       can  specify  their  preference	with  the  -f qsub
+       option.
+
+       For example:
+	      QSUBSLEEP	 2
+	      RERUNNABLEBYDEFAULT  false
 
 
-HTML PAGES
-       Man will find HTML pages if they live in directories named as  expected
-       to  be  ".html", thus a valid name for an HTML version of the ls(1) man
-       page would be /usr/share/man/htmlman1/ls.1.html.
+
+EXTENDED DESCRIPTION
+       Script Processing:
+
+       A job script may consist of  PBS	 directives,  com-
+       ments  and  executable statements.  A PBS directive
+       provides a way  of  specifying  job  attributes	in
+       addition to the command line options.  For example:
+	      :
+	      #PBS -N Job_name
+	      #PBS -l walltime=10:30,mem=320kb
+	      #PBS -m be
+	      #
+	      step1 arg1 arg2
+	      step2 arg3 arg4
 
 
-SEARCH PATH FOR MANUAL PAGES
-       man uses a sophisticated method of finding manual page files, based  on
-       the  invocation	options and environment variables, the /etc/man.config
-       configuration file, and some built in conventions and heuristics.
+       The qsub command scans the lines of the script file
+       for directives.	An initial line in the script that
+       begins with the characters "#!"	or  the	 character
+       ":"  will  be  ignored and scanning will start with
+       the next line.  Scanning will  continue	until  the
+       first  executable  line, that is a line that is not
+       blank, not a directive line, nor a line whose first
+       non  white  space  character is "#".  If directives
+       occur on subsequent lines, they will be ignored.
 
-       First of all, when the name argument to man contains a slash  (/),  man
-       assumes	it  is	a file specification itself, and there is no searching
-       involved.
+       A line in the script file will be  processed  as	 a
+       directive  to  qsub  if	and  only if the string of
+       characters starting with the first non white  space
+       character on the line and of the same length as the
+       directive prefix matches the directive prefix.
 
-       But in the normal case where name doesn’t contain a slash, man searches
-       a variety of directories for a file that could be a manual page for the
-       topic named.
+       The remainder of the directive line consists of the
+       options	to  qsub in the same syntax as they appear
+       on the command line.  The option character is to be
+       preceded with the "-" character.
 
-       If you specify the -M pathlist option, pathlist	is  a  colon-separated
-       list of the directories that man searches.
+       If  an option is present in both a directive and on
+       the command line, that option and its argument,	if
+       any, will be ignored in the directive.  The command
+       line takes precedence.
 
-       If  you	don’t specify -M but set the MANPATH environment variable, the
-       value of that  variable	is  the	 list  of  the	directories  that  man
-       searches.
+       If an option is present in a directive and  not	on
+       the  command line, that option and its argument, if
+       any, will be processed as if it had occurred on the
+       command line.
 
-       If  you	don’t  specify	an  explicit path list with -M or MANPATH, man
-       develops its own path list based on the contents of  the	 configuration
-       file /etc/man.config.  The MANPATH statements in the configuration file
-       identify particular directories to include in the search path.
+       The  directive  prefix string will be determined in
+       order of preference from:
 
-       Furthermore, the MANPATH_MAP statements add to the search path  depend-
-       ing  on your command search path (i.e. your PATH environment variable).
-       For each directory that may be in  the  command	search	path,  a  MAN-
-       PATH_MAP	 statement  specifies  a directory that should be added to the
-       search path for manual page files.  man looks at the PATH variable  and
-       adds the corresponding directories to the manual page file search path.
-       Thus, with the proper use of MANPATH_MAP, when you  issue  the  command
-       man  xyz,  you  get a manual page for the program that would run if you
-       issued the command xyz.
+	   The value of the  -C	 option	 argument  if  the
+	   option is specified on the command line.
 
-       In addition, for each directory in the command search path (we’ll  call
-       it  a  "command	directory")  for  which	 you do not have a MANPATH_MAP
-       statement, man automatically looks for a manual page directory "nearby"
-       namely as a subdirectory in the command directory itself or in the par-
-       ent directory of the command directory.
+	   The value of the environment variable PBS_DPRE-
+	   FIX if it is defined.
 
-       You can disable the automatic "nearby" searches by  including  a	 NOAU-
-       TOPATH statement in /etc/man.config.
+	   The four character string #PBS.
 
-       In  each	 directory in the search path as described above, man searches
-       for a file named topic.section, with an optional suffix on the  section
-       number  and  possibly  a compression suffix.  If it doesn’t find such a
-       file, it then looks in any subdirectories named manN or catN where N is
-       the  manual section number.  If the file is in a catN subdirectory, man
-       assumes it is a formatted manual page file (cat page).  Otherwise,  man
-       assumes it is unformatted.  In either case, if the filename has a known
-       compression suffix (like .gz), man assumes it is gzipped.
+       If the -C option is found in  a	directive  in  the
+       script file, it will be ignored.
 
-       If you want to see where (or if) man would find the manual page	for  a
-       particular topic, use the --path (-w) option.
+       User Authorization:
+
+       When  the  user	submits	 a job from a system other
+       than the one on which the PBS  Server  is  running,
+       the  name  under which the job is to be executed is
+       selected according to the rules listed under the -u
+       option.	The user submitting the job must be autho-
+       rized to run the job under the execution user name.
+       This authorization is provided if
+
+	      (1)  The	host  on  which	 qsub  is  run	is
+		   trusted  by	the  execution	host  (see
+		   /etc/hosts.equiv),
+
+	      (2)  The	execution user has an .rhosts file
+		   naming the submitting user on the  sub-
+		   mitting host.
+
+       C-Shell .logout File:
+
+       The  following  warning applies for users of the c-
+       shell, csh.  If the job is executed under  the  csh
+       and  a .logout file exists in the home directory in
+       which the job executes, the exit status of the  job
+       is  that of the .logout script, not the job script.
+       This may impact	any  inter-job	dependencies.	To
+       preserve	 the  job  exit	 status, either remove the
+       .logout file or place the  following  line  as  the
+       first line in the .logout file
+	  set EXITVAL = $status
+       and  the following line as the last executable line
+       in .logout
+	  exit $EXITVAL
+
+       Interactive Jobs:
+
+       If the -I option is specified on the  command  line
+       or  in  a script directive, or if the "interactive"
+       job attribute declared true via the -W  option,	-W
+       interactive=true,  either on the command line or in
+       a script directive, the job is an interactive  job.
+       The  script  will  be processed for directives, but
+       will not be included with the job.   When  the  job
+       begins  execution, all input to the job is from the
+       terminal session in which qsub is running.
+
+       When an interactive job is submitted, the qsub com-
+       mand  will not terminate when the job is submitted.
+       Qsub will remain running until the job  terminates,
+       is  aborted,  or	 the  user interrupts qsub with an
+       SIGINT (the control-C key).  If qsub is interrupted
+       prior  to  job  start,  it  will	 query if the user
+       wishes to exit.	If the user response  "yes",  qsub
+       exits and the job is aborted.
+
+       Once  the  interactive  job  has started execution,
+       input to and output from the job pass through qsub.
+       Keyboard	 generated  interrupts	are  passed to the
+       job.  Lines entered that begin with the tilde (’~’)
+       character and contain special sequences are escaped
+       by qsub.	 The recognized escape sequences are:
+
+	      ~.     Qsub terminates execution.	 The batch
+		     job is also terminated.
+
+	      ~susp  Suspend  the  qsub program if running
+		     under the C  shell.   "susp"  is  the
+		     suspend character, usually CNTL-Z.
+
+	      ~asusp Suspend  the input half of qsub (ter-
+		     minal to job), but	 allow	output	to
+		     continue to be displayed.	Only works
+		     under the C shell.	  "asusp"  is  the
+		     auxiliary	suspend character, usually
+		     CNTL-Y.
 
 
-ENVIRONMENT
-       MANPATH
-	      If  MANPATH is set, man uses it as the path to search for manual
-	      page files.  It overrides the configuration file and  the	 auto-
-	      matic  search  path,  but	 is  overridden	 by  the -M invocation
-	      option.  See SEARCH PATH FOR MANUAL PAGES.
+EXIT STATUS
+       Upon successful processing, the	qsub  exit  status
+       will be a value of zero.
 
-       MANPL  If MANPL is set, its value is used as the display	 page  length.
-	      Otherwise, the entire man page will occupy one (long) page.
-
-       MANROFFSEQ
-	      If  MANROFFSEQ is set, its value is used to determine the set of
-	      preprocessors run before running nroff or	 troff.	  By  default,
-	      pages are passed through the tbl preprocessor before nroff.
-
-       MANSECT
-	      If  MANSECT  is set, its value is used to determine which manual
-	      sections to search.
-
-       MANWIDTH
-	      If MANWIDTH is set, its value is	used  as  the  width  manpages
-	      should  be displayed.  Otherwise the pages may be displayed over
-	      the whole width of your screen.
-
-       MANPAGER
-	      If MANPAGER is set, its value is used as the name of the program
-	      to  use to display the man page.	If not, then PAGER is used. If
-	      that has no value either, /usr/bin/less -is is used.
-
-       BROWSER
-	      The name of a browser to use for displaying HTML	manual	pages.
-	      If it is not set, /usr/bin/less -is is used.
-
-       HTMLPAGER
-	      The  command to use for rendering HTML manual pages as text.  If
-	      it is not set, /bin/cat is used.
-
-       LANG   If LANG is set, its value defines the name of  the  subdirectory
-	      where  man first looks for man pages. Thus, the command ‘LANG=dk
-	      man 1 foo’ will cause man to  look  for  the  foo	 man  page  in
-	      .../dk/man1/foo.1,  and  if  it cannot find such a file, then in
-	      .../man1/foo.1, where ... is a directory on the search path.
-
-       NLSPATH, LC_MESSAGES, LANG
-	      The environment variables NLSPATH and LC_MESSAGES (or LANG  when
-	      the  latter  does not exist) play a role in locating the message
-	      catalog.	(But the English messages are  compiled	 in,  and  for
-	      English no catalog is required.)	Note that programs like col(1)
-	      called by man also use e.g. LC_CTYPE.
-
-       PATH   PATH helps determine the search path for manual page files.  See
-	      SEARCH PATH FOR MANUAL PAGES.
-
-       SYSTEM SYSTEM is used to get the default alternate system name (for use
-	      with the -m option).
-
-BUGS
-       The -t option only works if a troff-like program is installed.
-       If you see blinking  \255  or  <AD>  instead  of	 hyphens,  put	‘LESS-
-       CHARSET=latin1’ in your environment.
-
-TIPS
-       If you add the line
-
-	(global-set-key	 [(f1)]	 (lambda  () (interactive) (manual-entry (cur-
-       rent-word))))
-
-       to your .emacs file, then hitting F1 will give you the man page for the
-       library call at the current cursor position.
-
-       To  get	a  plain  text	version	 of a man page, without backspaces and
-       underscores, try
-
-	 # man foo | col -b > foo.mantxt
-
-AUTHOR
-       John W. Eaton was the  original	author	of  man.   Zeyd	 M.  Ben-Halim
-       released	 man  1.2,  and	 Andries Brouwer followed up with versions 1.3
-       thru 1.5p.  Federico  Lucifredi	<flucifredi@acm.org>  is  the  current
-       maintainer.
+       If the qsub command fails, the command exits with a
+       value greater than zero.
 
 SEE ALSO
-       apropos(1), whatis(1), less(1), groff(1), man.config(5).
+       qalter(1B),   qdel(1B),	  qhold(1B),	qmove(1B),
+       qmsg(1B),    qrerun(1B),	  qrls(1B),   qselect(1B),
+       qsig(1B),	qstat(1B),	  pbs_connect(3B),
+       pbs_job_attributes(7B),	 pbs_queue_attributes(7B),
+       pbs_resources_irix5(7B),	    pbs_resources_sp2(7B),
+       pbs_resources_sunos4(7B),	pbs_resources_uni-
+       cos8(7B),      pbs_server_attributes(7B),       and
+       pbs_server(8B)
 
 
 
-			      September 19, 2005			man(1)
+
+Local								      qsub(1B)
