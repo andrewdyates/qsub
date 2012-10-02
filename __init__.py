@@ -8,6 +8,7 @@ OSC qsub commands and environment
 https://osc.edu/book/export/html/2830
 https://www.osc.edu/supercomputing/batch-processing-at-osc/pbs-directives-summary
 https://www.osc.edu/documentation/batch-processing-at-osc/job-scripts
+https://www.osc.edu/supercomputing/batch-processing-at-osc/job-submission
 ==============================
 
 EXAMPLE USE:
@@ -51,19 +52,40 @@ source .bash_profile
 """
 # Default work directory is user's home directory
 WORK_DIR = os.environ["HOME"]
-MAX_PPN = 12
+MAX_PPN_OAKLEY = 12
+MAX_PPN_GLENN = 8
+
+def get_mail_option(begin=True, end=True, abort=True):
+  if not any((begin, end, abort)):
+    return ""
+  else:
+    mail_option = "#PBS -m "
+    if begin: mail_option += "b"
+    if end: mail_option += "e"
+    if abort: mail_option += "a"
+    return mail_option
+
+def get_set_env_op_threads(n):
+  return "export OMP_NUM_THREADS=%d" % (n)
+
 
 class Qsub(object):
   """Simple wrapper for qsub job building functionality."""
-  def __init__(self, jobname=None, n_nodes=1, n_ppn=1, hours=2, minutes=0, seconds=0, options="", work_dir=WORK_DIR, auto_time=True):
+  def __init__(self, jobname=None, n_nodes=1, n_ppn=1, hours=2, minutes=0, seconds=0, options=None, work_dir=WORK_DIR, auto_time=True, email=False):
     self.jobname = jobname
     self.n_nodes = n_nodes
     self.n_ppn = n_ppn
     self.walltime = timestr(hours, minutes, seconds)
-    self.options = options
-    self.cmds = []
-    self.auto_time = auto_time
+    if self.options is None:
+      self.options = []
+    else:
+      self.options = options
     self.work_dir = work_dir
+    self.auto_time = auto_time
+    self.cmds = []
+    if email:
+      self.options.append(get_mail_option())
+
 
   def t(self, line):
     return precmd(cmd="time", line=line, cond=self.auto_time)
@@ -73,24 +95,28 @@ class Qsub(object):
     cmd = make_parallel(self.work_dir, self.jobname, jobs, self.auto_time)
     self.cmds.append(cmd)
     
-  def add(self, job, simple=False):
-    if simple:
-      self.cmds.append(job)
-    else:
-      self.cmds.append(self.t(job))
+  def add(self, job, simple=False, pernode=None):
+    if not simple:
+      job = self.t(job)
+    if pernode is not None:
+      assert pernode <= self.n_ppn and pernode >= 1
+      precmd(cmd="time", line=job, cond=self.auto_time)
+      job = precmd("mpiexec -npernode %d " % pernode, job)
+    self.cmds.append(job)
 
   def echo(self, msg):
     self.cmds.append("echo %s" % msg)
 
   def qsub_script(self):
+    """Return current qsub script that will be submitted."""
     script = "\n".join(self.cmds)
-    return fill_template(jobname=self.jobname, n_nodes=self.n_nodes, n_ppn=self.n_ppn, walltime=self.walltime, options=self.options, script=script, work_dir=self.work_dir)
+    options = "\n".join(self.options)
+    return fill_template(jobname=self.jobname, n_nodes=self.n_nodes, n_ppn=self.n_ppn, walltime=self.walltime, options=options, script=script, work_dir=self.work_dir)
 
   def submit(self):
-    qsub_script = self.qsub_script
-    submit(qsub_script)
-    return qsub_script
-
+    """Submit qsub script, return job ID."""
+    qsub_script = self.qsub_script()
+    return submit(qsub_script)
     
     
 
@@ -119,14 +145,10 @@ def fill_template(jobname="untitled", n_nodes=1, n_ppn=1, walltime='2:00:00', op
 
 def submit(script_txt):
   # Get process ID
-  print "here"
   p = subprocess.Popen("qsub", stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-  print "there"
   stdout, stderr = p.communicate(input=script_txt)
-  print "out:", stdout
-  print "err:", stderr
   p.stdin.close()
-  return True
+  return stdout.split('.')[0]
 
 
 def tstamp():
@@ -139,7 +161,7 @@ def make_script_name(work_dir, job_name):
   dispatch_script_fname = os.path.join(work_dir, tmp_script_name)
   return dispatch_script_fname
 
-def precmd(cmd, line, cond):
+def precmd(cmd, line, cond=True):
   if cond and line.partition(' ')[0] != cmd:
     return " ".join(([cmd] + line.split(' ')))
   else:
