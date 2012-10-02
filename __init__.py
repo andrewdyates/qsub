@@ -54,7 +54,7 @@ WORK_DIR = os.environ["HOME"]
 MAX_PPN_OAKLEY = 12
 MAX_PPN_GLENN = 8
 
-def get_mail_option(begin=True, end=True, abort=True):
+def get_mail_option(begin=False, end=True, abort=True):
   if not any((begin, end, abort)):
     return ""
   else:

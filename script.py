@@ -7,4 +7,7 @@ EXAMPLE USE:
 from __init__ import *
 
 if __name__ == "__main__":
-  print submit(fill_template(**dict([(s.partition('=')[0], s.partition('=')[2]) for s in sys.argv[1:]])))
+  kwds = dict([(s.partition('=')[0], s.partition('=')[2]) for s in sys.argv[1:]])
+  script = fill_template(**kwds)
+  print script
+  print submit(script)
