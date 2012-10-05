@@ -1,5 +1,5 @@
 #!/usr/name/python
-"""Simple qsub dispatcher.
+"""Qsub job dispatcher.
 
 OSC qsub commands and environment
 --------------------
@@ -89,7 +89,7 @@ class Qsub(object):
     self.n_nodes = n_nodes
     self.n_ppn = n_ppn
     self.walltime = timestr(hours, minutes, seconds)
-    if self.options is None:
+    if options is None:
       self.options = []
     else:
       self.options = options
