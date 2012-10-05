@@ -116,6 +116,10 @@ class Qsub(object):
     self.cmds.append(cmd)
     
   def add(self, job, simple=False, pernode=None):
+    if job is None:
+      import sys
+      print "!!!!"
+      sys.exit(1)
     if not simple:
       job = self.t(job)
     if pernode is not None:
@@ -127,16 +131,19 @@ class Qsub(object):
   def echo(self, msg):
     self.cmds.append("echo %s" % msg)
 
-  def qsub_script(self):
+  def script(self):
     """Return current qsub script that will be submitted."""
     script = "\n".join(self.cmds)
     options = "\n".join(self.options)
     return fill_template(jobname=self.jobname, n_nodes=self.n_nodes, n_ppn=self.n_ppn, walltime=self.walltime, options=options, script=script, work_dir=self.work_dir)
 
-  def submit(self):
+  def submit(self, dry=False):
     """Submit qsub script, return job ID."""
-    qsub_script = self.qsub_script()
-    return submit(qsub_script)
+    if not dry:
+      qsub_script = self.script()
+      return submit(qsub_script)
+    else:
+      return "DRYRUN"
     
     
 
