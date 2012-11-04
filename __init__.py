@@ -1,5 +1,5 @@
 #!/usr/name/python
-"""Simple qsub dispatcher.
+"""Qsub job dispatcher.
 
 OSC qsub commands and environment
 --------------------
@@ -89,7 +89,7 @@ class Qsub(object):
     self.n_nodes = n_nodes
     self.n_ppn = n_ppn
     self.walltime = timestr(hours, minutes, seconds)
-    if self.options is None:
+    if options is None:
       self.options = []
     else:
       self.options = options
@@ -116,6 +116,10 @@ class Qsub(object):
     self.cmds.append(cmd)
     
   def add(self, job, simple=False, pernode=None):
+    if job is None:
+      import sys
+      print "!!!!"
+      sys.exit(1)
     if not simple:
       job = self.t(job)
     if pernode is not None:
@@ -127,16 +131,19 @@ class Qsub(object):
   def echo(self, msg):
     self.cmds.append("echo %s" % msg)
 
-  def qsub_script(self):
+  def script(self):
     """Return current qsub script that will be submitted."""
     script = "\n".join(self.cmds)
     options = "\n".join(self.options)
     return fill_template(jobname=self.jobname, n_nodes=self.n_nodes, n_ppn=self.n_ppn, walltime=self.walltime, options=options, script=script, work_dir=self.work_dir)
 
-  def submit(self):
+  def submit(self, dry=False):
     """Submit qsub script, return job ID."""
-    qsub_script = self.qsub_script()
-    return submit(qsub_script)
+    if not dry:
+      qsub_script = self.script()
+      return submit(qsub_script)
+    else:
+      return "DRYRUN"
     
     
 
@@ -178,9 +185,12 @@ def tstamp():
 
 def make_script_name(work_dir, job_name):
   random.seed()
+  tmp_dir = os.path.join(work_dir, "tmp_scripts")
+  if not os.path.exists(tmp_dir):
+    make_dir(tmp_dir)
   tmp_script_name = "tmp_parallel_script_%s_%s_%d.sh" % \
       (job_name, tstamp(), random.randint(0,10000000))
-  dispatch_script_fname = os.path.join(work_dir, tmp_script_name)
+  dispatch_script_fname = os.path.join(tmp_dir, tmp_script_name)
   return dispatch_script_fname
 
 def precmd(cmd, line, cond=True):
@@ -189,3 +199,9 @@ def precmd(cmd, line, cond=True):
   else:
     return line
 
+def make_dir(outdir):
+  try:
+    os.makedirs(outdir)
+  except OSError, e:
+    if e.errno != errno.EEXIST: raise
+  return outdir
