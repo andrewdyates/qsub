@@ -1,5 +1,5 @@
 #!/usr/name/python
-"""Simple qsub dispatcher.
+"""Qsub job dispatcher.
 
 OSC qsub commands and environment
 --------------------
@@ -28,11 +28,10 @@ Q.add_parallel(["python batch.py 1", "python batch.py 2"])
 Q.add("mycmd a=c")
 print Q.submit()
 """
-import sys
 import subprocess
 import random
 import datetime
-import os
+import os, errno
 
 TEMPLATE = \
 """#PBS -N %(jobname)s
@@ -54,7 +53,7 @@ WORK_DIR = os.environ["HOME"]
 MAX_PPN_OAKLEY = 12
 MAX_PPN_GLENN = 8
 
-def get_mail_option(begin=True, end=True, abort=True):
+def get_mail_option(begin=False, end=True, abort=True):
   if not any((begin, end, abort)):
     return ""
   else:
@@ -81,7 +80,7 @@ def get_stdout_option(path):
 
 def get_depend_option(jobids, rel="after", exetype="any"):
   """Handles simplest case of dependency. See qsub manual for more complex options."""
-  return "#PBS -W depend=after%s:%s" % ":".join(jobids)
+  return "#PBS -W depend=%s%s:%s" % (rel, exetype, ":".join(jobids))
 
 class Qsub(object):
   """Simple wrapper for qsub job building functionality."""
@@ -90,7 +89,7 @@ class Qsub(object):
     self.n_nodes = n_nodes
     self.n_ppn = n_ppn
     self.walltime = timestr(hours, minutes, seconds)
-    if self.options is None:
+    if options is None:
       self.options = []
     else:
       self.options = options
@@ -99,14 +98,14 @@ class Qsub(object):
     self.cmds = []
     if email:
       self.options.append(get_mail_option())
-    if stdout:
+    if stdout_fpath:
       self.options.append(get_stdout_option(stdout_fpath))
-    if stderr:
+    if stderr_fpath:
       self.options.append(get_stderr_option(stderr_fpath))
     if after_jobids:
       if type(after_jobids) == str:
         after_jobids.split(':')
-      self.options.append(get_depend_option(jobids))
+      self.options.append(get_depend_option(after_jobids))
       
   def t(self, line):
     return precmd(cmd="time", line=line, cond=self.auto_time)
@@ -117,6 +116,10 @@ class Qsub(object):
     self.cmds.append(cmd)
     
   def add(self, job, simple=False, pernode=None):
+    if job is None:
+      import sys
+      print "!!!!"
+      sys.exit(1)
     if not simple:
       job = self.t(job)
     if pernode is not None:
@@ -128,16 +131,19 @@ class Qsub(object):
   def echo(self, msg):
     self.cmds.append("echo %s" % msg)
 
-  def qsub_script(self):
+  def script(self):
     """Return current qsub script that will be submitted."""
     script = "\n".join(self.cmds)
     options = "\n".join(self.options)
     return fill_template(jobname=self.jobname, n_nodes=self.n_nodes, n_ppn=self.n_ppn, walltime=self.walltime, options=options, script=script, work_dir=self.work_dir)
 
-  def submit(self):
+  def submit(self, dry=False):
     """Submit qsub script, return job ID."""
-    qsub_script = self.qsub_script()
-    return submit(qsub_script)
+    if not dry:
+      qsub_script = self.script()
+      return submit(qsub_script)
+    else:
+      return "DRYRUN"
     
     
 
@@ -158,7 +164,7 @@ def make_parallel(work_dir, job_name, jobs, auto_time=True):
 def fill_template(jobname="untitled", n_nodes=1, n_ppn=1, walltime='0:40:00', options="", script=None, work_dir=WORK_DIR, *vargs, **kwds):
   """Fill qsub submission script. Absorb any unrecognized keywords."""
   assert True or vargs is None or kwds is None # thwart pychecker warnings
-  assert all((n_nodes, n_ppn, walltime, script, work_dir))
+  assert all((jobname, n_nodes, n_ppn, walltime, script, work_dir))
   assert type(options) == str
   n_ppn = int(n_ppn)
   n_nodes = int(n_nodes)
@@ -179,9 +185,12 @@ def tstamp():
 
 def make_script_name(work_dir, job_name):
   random.seed()
+  tmp_dir = os.path.join(work_dir, "tmp_scripts")
+  if not os.path.exists(tmp_dir):
+    make_dir(tmp_dir)
   tmp_script_name = "tmp_parallel_script_%s_%s_%d.sh" % \
       (job_name, tstamp(), random.randint(0,10000000))
-  dispatch_script_fname = os.path.join(work_dir, tmp_script_name)
+  dispatch_script_fname = os.path.join(tmp_dir, tmp_script_name)
   return dispatch_script_fname
 
 def precmd(cmd, line, cond=True):
@@ -190,3 +199,9 @@ def precmd(cmd, line, cond=True):
   else:
     return line
 
+def make_dir(outdir):
+  try:
+    os.makedirs(outdir)
+  except OSError, e:
+    if e.errno != errno.EEXIST: raise
+  return outdir

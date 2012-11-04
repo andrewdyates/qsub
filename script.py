@@ -4,7 +4,15 @@
 EXAMPLE USE:
   python script.py script="echo 'hello'"
 """
+import sys
 from __init__ import *
 
+
+def main():
+  kwds = dict([(s.partition('=')[0], s.partition('=')[2]) for s in sys.argv[1:]])
+  script = fill_template(**kwds)
+  print script
+  print submit(script)
+  
 if __name__ == "__main__":
-  print submit(fill_template(**dict([(s.partition('=')[0], s.partition('=')[2]) for s in sys.argv[1:]])))
+  main()
