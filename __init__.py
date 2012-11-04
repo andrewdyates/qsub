@@ -185,9 +185,12 @@ def tstamp():
 
 def make_script_name(work_dir, job_name):
   random.seed()
+  tmp_dir = os.path.join(work_dir, "tmp_scripts")
+  if not os.path.exists(tmp_dir):
+    make_dir(tmp_dir)
   tmp_script_name = "tmp_parallel_script_%s_%s_%d.sh" % \
       (job_name, tstamp(), random.randint(0,10000000))
-  dispatch_script_fname = os.path.join(work_dir, tmp_script_name)
+  dispatch_script_fname = os.path.join(tmp_dir, tmp_script_name)
   return dispatch_script_fname
 
 def precmd(cmd, line, cond=True):
@@ -196,3 +199,9 @@ def precmd(cmd, line, cond=True):
   else:
     return line
 
+def make_dir(outdir):
+  try:
+    os.makedirs(outdir)
+  except OSError, e:
+    if e.errno != errno.EEXIST: raise
+  return outdir
