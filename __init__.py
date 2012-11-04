@@ -31,7 +31,7 @@ print Q.submit()
 import subprocess
 import random
 import datetime
-import os
+import os, errno
 
 TEMPLATE = \
 """#PBS -N %(jobname)s
