@@ -45,7 +45,7 @@ TEMPLATE = \
 
 set -x
 cd %(work_dir)s
-source .bash_profile
+source $HOME/.bash_profile
 echo "PBS_JOBID: $PBS_JOBID"
 %(script)s
 """
