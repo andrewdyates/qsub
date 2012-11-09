@@ -84,7 +84,7 @@ def get_depend_option(jobids, rel="after", exetype="any"):
 
 class Qsub(object):
   """Simple wrapper for qsub job building functionality."""
-  def __init__(self, jobname=None, n_nodes=1, n_ppn=1, hours=1, minutes=0, seconds=0, options=None, work_dir=WORK_DIR, auto_time=True, email=False, stdout_fpath=None, stderr_fpath=None, after_jobids=None):
+  def __init__(self, jobname="untitled", n_nodes=1, n_ppn=1, hours=1, minutes=0, seconds=0, options=None, work_dir=WORK_DIR, auto_time=True, email=False, stdout_fpath=None, stderr_fpath=None, after_jobids=None):
     self.jobname = jobname
     self.n_nodes = n_nodes
     self.n_ppn = n_ppn
@@ -164,7 +164,7 @@ def make_parallel(work_dir, job_name, jobs, auto_time=True):
 def fill_template(jobname="untitled", n_nodes=1, n_ppn=1, walltime='0:40:00', options="", script=None, work_dir=WORK_DIR, *vargs, **kwds):
   """Fill qsub submission script. Absorb any unrecognized keywords."""
   assert True or vargs is None or kwds is None # thwart pychecker warnings
-  assert all((jobname, n_nodes, n_ppn, walltime, script, work_dir))
+  assert all((jobname, n_nodes, n_ppn, walltime, script, work_dir)), str((jobname, n_nodes, n_ppn, walltime, script, work_dir))
   assert type(options) == str
   n_ppn = int(n_ppn)
   n_nodes = int(n_nodes)
