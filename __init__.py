@@ -108,7 +108,7 @@ class Qsub(object):
       self.options.append(get_depend_option(after_jobids))
       
   def t(self, line):
-    return precmd(cmd="time", line=line, cond=self.auto_time)
+    return precmd(cmd="/usr/bin/time", line=line, cond=self.auto_time)
 
   def add_parallel(self, jobs):
     assert type(jobs) != str
