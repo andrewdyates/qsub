@@ -1,0 +1,14 @@
+#PBS -N Title
+#PBS -l nodes=1:ppn=12
+#PBS -j oe
+#PBS -S /bin/bash
+#PBS -l walltime=99:00:00
+
+#tdate=$(date +%%T)
+
+set -x
+cd /nfs/01/osu6683/
+source .bash_profile
+
+
+echo "hello"
