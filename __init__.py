@@ -103,8 +103,8 @@ class Qsub(object):
     if stderr_fpath:
       self.options.append(get_stderr_option(stderr_fpath))
     if after_jobids:
-      if type(after_jobids) == str:
-        after_jobids.split(':')
+      if isinstance(after_jobids, basestring):
+        after_jobids = after_jobids.split(':')
       self.options.append(get_depend_option(after_jobids))
       
   def t(self, line):
