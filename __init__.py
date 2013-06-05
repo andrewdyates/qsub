@@ -52,8 +52,9 @@ echo "PBS_JOBID: $PBS_JOBID"
 WORK_DIR = os.environ["HOME"]
 MAX_PPN_OAKLEY = 12
 MAX_PPN_GLENN = 8
+EMAIL_ADDR = 'yates.115.osu@gmail.com'
 
-def get_mail_option(begin=False, end=True, abort=True):
+def get_mail_option(begin=True, end=True, abort=True):
   if not any((begin, end, abort)):
     return ""
   else:
@@ -61,7 +62,9 @@ def get_mail_option(begin=False, end=True, abort=True):
     if begin: mail_option += "b"
     if end: mail_option += "e"
     if abort: mail_option += "a"
-    return mail_option
+  if EMAIL_ADDR:
+    mail_option += "\n#PBS -M " + EMAIL_ADDR
+  return mail_option
 
 def get_set_env_op_threads(n):
   return "export OMP_NUM_THREADS=%d" % (n)

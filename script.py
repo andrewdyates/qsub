@@ -2,7 +2,7 @@
 """Script handle.
 
 EXAMPLE USE:
-  python script.py script="echo 'hello'"
+  python script.py script="echo 'hello'" options="#PBS -M yates.115.osu@gmail.com"
 """
 import sys
 from __init__ import *
