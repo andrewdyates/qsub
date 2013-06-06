@@ -50,9 +50,9 @@ echo "PBS_JOBID: $PBS_JOBID"
 """
 # Default work directory is user's home directory
 WORK_DIR = os.environ["HOME"]
-MAX_PPN_OAKLEY = 12
-MAX_PPN_GLENN = 8
 EMAIL_ADDR = 'yates.115.osu@gmail.com'
+SYS_MAX_PPN = int(os.environ.get("SYS_MAX_PPN", 8))
+SYS_MAX_PPN_LIST = set([-1,None,False,"-1","max","MAX","all","ALL"])
 
 def get_mail_option(begin=True, end=True, abort=True):
   if not any((begin, end, abort)):
@@ -90,6 +90,8 @@ class Qsub(object):
   def __init__(self, jobname="untitled", n_nodes=1, n_ppn=1, hours=1, minutes=0, seconds=0, options=None, work_dir=WORK_DIR, auto_time=True, email=False, stdout_fpath=None, stderr_fpath=None, after_jobids=None):
     self.jobname = jobname
     self.n_nodes = n_nodes
+    if n_ppn in SYS_MAX_PPN_LIST:
+      self.n_ppn = SYS_MAX_PPN
     self.n_ppn = n_ppn
     self.walltime = timestr(hours, minutes, seconds)
     if options is None:
@@ -169,6 +171,8 @@ def fill_template(jobname="untitled", n_nodes=1, n_ppn=1, walltime='0:40:00', op
   assert True or vargs is None or kwds is None # thwart pychecker warnings
   assert all((jobname, n_nodes, n_ppn, walltime, script, work_dir)), str((jobname, n_nodes, n_ppn, walltime, script, work_dir))
   assert type(options) == str
+  if n_ppn in SYS_MAX_PPN_LIST:
+    n_ppn = SYS_MAX_PPN
   n_ppn = int(n_ppn)
   n_nodes = int(n_nodes)
   return TEMPLATE % locals()
