@@ -36,8 +36,6 @@ import os, errno
 TEMPLATE = \
 """#PBS -N %(jobname)s
 #PBS -l nodes=%(n_nodes)d:ppn=%(n_ppn)d
-#PBS -j oe
-#PBS -S /bin/bash
 #PBS -l walltime=%(walltime)s
 %(options)s
 #tdate=$(date +%%T)
@@ -97,7 +95,7 @@ class Qsub(object):
     if options is None:
       self.options = []
     else:
-      self.options = options
+      self.options = options.split('\n')
     self.work_dir = work_dir
     self.auto_time = auto_time
     self.cmds = []
@@ -153,7 +151,7 @@ class Qsub(object):
     
 
 def timestr(hours=0, minutes=0, seconds=0):
-  return "%d:%.2d:%.2d" % (hours, minutes, seconds)
+  return "%d:%.2d:%.2d" % (int(hours), int(minutes), int(seconds))
 
 def make_parallel(work_dir, job_name, jobs, auto_time=True):
   fname = make_script_name(work_dir, job_name)

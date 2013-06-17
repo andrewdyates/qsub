@@ -10,9 +10,15 @@ from __init__ import *
 
 def main():
   kwds = dict([(s.partition('=')[0], s.partition('=')[2]) for s in sys.argv[1:]])
-  script = fill_template(**kwds)
-  print script
-  print submit(script)
+  cmd = kwds['script']
+  dry = kwds.get('dry', False)
+  if dry in ('f','false','False','None'): dry = False
+  del kwds['script']
+  if 'dry' in kwds: del kwds['dry']
+  Q = Qsub(**kwds)
+  Q.add(cmd)
+  print Q.script()
+  print Q.submit(dry)
   
 if __name__ == "__main__":
   main()
