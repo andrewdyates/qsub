@@ -85,13 +85,16 @@ def get_depend_option(jobids, rel="after", exetype="any"):
 
 class Qsub(object):
   """Simple wrapper for qsub job building functionality."""
-  def __init__(self, jobname="untitled", n_nodes=1, n_ppn=1, hours=1, minutes=0, seconds=0, options=None, work_dir=WORK_DIR, auto_time=True, email=False, stdout_fpath=None, stderr_fpath=None, after_jobids=None):
+  def __init__(self, jobname="untitled", n_nodes=1, n_ppn=1, hours=1, minutes=0, seconds=0, options=None, work_dir=WORK_DIR, auto_time=False, email=False, stdout_fpath=None, stderr_fpath=None, after_jobids=None, walltime=None):
     self.jobname = jobname
     self.n_nodes = n_nodes
     if n_ppn in SYS_MAX_PPN_LIST:
       self.n_ppn = SYS_MAX_PPN
     self.n_ppn = n_ppn
-    self.walltime = timestr(hours, minutes, seconds)
+    if walltime is None:
+      self.walltime = timestr(hours, minutes, seconds)
+    else:
+      self.walltime = walltime
     if options is None:
       self.options = []
     else:
